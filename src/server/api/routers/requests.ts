@@ -8,7 +8,9 @@ import {
 
 export const requestsRouter = createTRPCRouter({
   getAll: publicProcedure.query(({ ctx }) => {
-    return ctx.prisma.request.findMany();
+    return ctx.prisma.request.findMany({ include: {
+      user: true
+    } });
   }),
 
   createRequest: protectedProcedure

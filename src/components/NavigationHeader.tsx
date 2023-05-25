@@ -1,17 +1,10 @@
 import { Fragment } from "react";
 import { Disclosure, Menu, Transition } from "@headlessui/react";
-import { Bars3Icon,  XMarkIcon } from "@heroicons/react/24/outline";
-import { signOut, useSession } from "next-auth/react";
+import { Bars3Icon, XMarkIcon } from "@heroicons/react/24/outline";
+import { signIn, signOut, useSession } from "next-auth/react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/router";
-
-const navigation = [
-  { name: "Groups", href: "/groups", current: false },
-  { name: "Requests", href: "/requests", current: false },
-  { name: "Ordered", href: "#", current: false },
-  { name: "Fulfilled", href: "#", current: false },
-];
 
 function classNames(...classes: Array<string>) {
   return classes.filter(Boolean).join(" ");
@@ -20,6 +13,25 @@ function classNames(...classes: Array<string>) {
 export default function NavigationHeader() {
   const router = useRouter();
   const { data: sessionData } = useSession();
+
+  function isActive(navElement: {
+    name: string;
+    href: string;
+    current: boolean;
+  }) {
+    const currentPath = router.pathname;
+    const navPath = navElement.href;
+    navElement.current = currentPath.startsWith(navPath);
+
+    return navElement;
+  }
+
+  const navigation = [
+    { name: "Groups", href: "/groups", current: false },
+    { name: "Requests", href: "/requests", current: false },
+    { name: "Ordered", href: "#", current: false },
+    { name: "Fulfilled", href: "#", current: false },
+  ].map(isActive);
 
   return (
     <Disclosure as="nav" className="bg-gray-800">
@@ -40,7 +52,10 @@ export default function NavigationHeader() {
               </div>
               <div className="flex flex-1 items-center justify-center sm:items-stretch sm:justify-start">
                 <div className="flex flex-shrink-0 items-center">
-                  <Link href={'/'} className="text-lg font-extrabold tracking-tight text-white">
+                  <Link
+                    href={"/"}
+                    className="text-lg font-extrabold tracking-tight text-white"
+                  >
                     Request<span className="text-[hsl(280,100%,70%)]">r</span>
                   </Link>
                 </div>
@@ -64,75 +79,84 @@ export default function NavigationHeader() {
                   </div>
                 </div>
               </div>
-              <h1>{router.route}</h1>
               <div className="absolute inset-y-0 right-0 flex items-center pr-2 sm:static sm:inset-auto sm:ml-6 sm:pr-0">
-
                 {/* Profile dropdown */}
-                <Menu as="div" className="relative ml-3">
-                  <div>
-                    <Menu.Button className="flex rounded-full bg-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-gray-800">
-                      <span className="sr-only">Open user menu</span>
-                      <Image
-                        className="h-8 w-8 rounded-full"
-                        src={sessionData?.user.image || ""}
-                        width={50}
-                        height={50}
-                        alt="Profile Image"
-                      />
-                    </Menu.Button>
-                  </div>
-                  <Transition
-                    as={Fragment}
-                    enter="transition ease-out duration-100"
-                    enterFrom="transform opacity-0 scale-95"
-                    enterTo="transform opacity-100 scale-100"
-                    leave="transition ease-in duration-75"
-                    leaveFrom="transform opacity-100 scale-100"
-                    leaveTo="transform opacity-0 scale-95"
+                {sessionData && (
+                  <Menu as="div" className="relative ml-3">
+                    <div>
+                      <Menu.Button className="flex rounded-full bg-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-gray-800">
+                        <span className="sr-only">Open user menu</span>
+                        <Image
+                          className="h-8 w-8 rounded-full"
+                          src={sessionData?.user.image || ""}
+                          width={50}
+                          height={50}
+                          alt="Profile Image"
+                        />
+                      </Menu.Button>
+                    </div>
+                    <Transition
+                      as={Fragment}
+                      enter="transition ease-out duration-100"
+                      enterFrom="transform opacity-0 scale-95"
+                      enterTo="transform opacity-100 scale-100"
+                      leave="transition ease-in duration-75"
+                      leaveFrom="transform opacity-100 scale-100"
+                      leaveTo="transform opacity-0 scale-95"
+                    >
+                      <Menu.Items className="absolute right-0 z-10 mt-2 w-48 origin-top-right rounded-md bg-white py-1 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
+                        <Menu.Item>
+                          {({ active }) => (
+                            <a
+                              href="#"
+                              className={classNames(
+                                active ? "bg-gray-100" : "",
+                                "block px-4 py-2 text-sm text-gray-700"
+                              )}
+                            >
+                              Your Profile
+                            </a>
+                          )}
+                        </Menu.Item>
+                        <Menu.Item>
+                          {({ active }) => (
+                            <a
+                              href="#"
+                              className={classNames(
+                                active ? "bg-gray-100" : "",
+                                "block px-4 py-2 text-sm text-gray-700"
+                              )}
+                            >
+                              Settings
+                            </a>
+                          )}
+                        </Menu.Item>
+                        <Menu.Item>
+                          {({ active }) => (
+                            <button
+                              onClick={() => void signOut()}
+                              className={classNames(
+                                active ? "bg-gray-100" : "",
+                                "flex w-full px-4 py-2 text-sm text-gray-700"
+                              )}
+                            >
+                              Sign out
+                            </button>
+                          )}
+                        </Menu.Item>
+                      </Menu.Items>
+                    </Transition>
+                  </Menu>
+                )}
+
+                {!sessionData && (
+                  <button
+                    className="text-sm font-medium tracking-tight text-white"
+                    onClick={() => void signIn()}
                   >
-                    <Menu.Items className="absolute right-0 z-10 mt-2 w-48 origin-top-right rounded-md bg-white py-1 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
-                      <Menu.Item>
-                        {({ active }) => (
-                          <a
-                            href="#"
-                            className={classNames(
-                              active ? "bg-gray-100" : "",
-                              "block px-4 py-2 text-sm text-gray-700"
-                            )}
-                          >
-                            Your Profile
-                          </a>
-                        )}
-                      </Menu.Item>
-                      <Menu.Item>
-                        {({ active }) => (
-                          <a
-                            href="#"
-                            className={classNames(
-                              active ? "bg-gray-100" : "",
-                              "block px-4 py-2 text-sm text-gray-700"
-                            )}
-                          >
-                            Settings
-                          </a>
-                        )}
-                      </Menu.Item>
-                      <Menu.Item>
-                        {({ active }) => (
-                          <button
-                            onClick={() => void signOut()}
-                            className={classNames(
-                              active ? "bg-gray-100" : "",
-                              "flex px-4 py-2 text-sm text-gray-700 w-full"
-                            )}
-                          >
-                            Sign out
-                          </button>
-                        )}
-                      </Menu.Item>
-                    </Menu.Items>
-                  </Transition>
-                </Menu>
+                    Log In
+                  </button>
+                )}
               </div>
             </div>
           </div>
